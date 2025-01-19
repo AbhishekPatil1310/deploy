@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <h1>Task Manager</h1>
+    <form id="taskForm">
+        <input type="text" id="title" placeholder="Task Title" required>
+        <textarea id="description" placeholder="Task Description" required></textarea>
+        <button type="submit">Add Task</button>
+    </form>
+    <h2>Tasks</h2>
+    <ul id="taskList"></ul>
+    <script>
+        async function fetchTasks() {
+            const response = await fetch("/api/tasks");
+            const tasks = await response.json();
+            const taskList = document.getElementById("taskList");
+            taskList.innerHTML = "";
+            tasks.forEach(task => {
+                const li = document.createElement("li");
+                li.textContent = `${task.title}: ${task.description}`;
+                const deleteButton = document.createElement("button");
+                deleteButton.textContent = "Delete";
+                deleteButton.onclick = async () => {
+                    await fetch(`/api/tasks/${task.id}`, { method: "DELETE" });
+                    fetchTasks();
+                };
+                li.appendChild(deleteButton);
+                taskList.appendChild(li);
+            });
+        }
+
+        document.getElementById("taskForm").onsubmit = async (e) => {
+            e.preventDefault();
+            const title = document.getElementById("title").value;
+            const description = document.getElementById("description").value;
+            await fetch("/api/tasks", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title, description }),
+            });
+            document.getElementById("taskForm").reset();
+            fetchTasks();
+        };
+
+        fetchTasks();
+    </script>
+</body>
+</html>
